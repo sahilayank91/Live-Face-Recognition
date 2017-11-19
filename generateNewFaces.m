@@ -1,5 +1,4 @@
-%% Simple Face Recognition Example
-%  Copyright 2014-2015 The MathWorks, Inc.
+
 %% Load Image Information from ATT Face Database Directory
 faceDatabase = imageSet('FaceDatabaseATT','recursive');
 
@@ -58,17 +57,32 @@ integerIndex = find(booleanIndex);
 subplot(1,2,1);imshow(queryImage);title('Query Face');
 subplot(1,2,2);imshow(read(training(integerIndex),1));title('Matched Class');
 
-%% Test First 5 People from Test Set
+%% Generate Face Detector
+faceDetector = vision.CascadeObjectDetector;
+shapeInserter = vision.ShapeInserter('BorderColor','Custom','CustomBorderColor',[0 255 255]);
+
+%% Test People from Test Set
 figure;
 figureNum = 1;
-url = 'http://172.21.7.139:8080/shot.jpg';
+url = 'http://172.16.25.206:8080/shot.jpg';
 
 while(1)
-    ss = imread(url);
-    imshow(ss);
-        frame = rgb2gray(ss);
-        imresize(frame,[400 600]);
-        imwrite(imresize(frame, [112 92]), strcat('query','.pgm'));
+        ss = imread(url);
+        %frame = rgb2gray(ss);
+        frame = imresize(ss,[400 NaN]);
+        
+        bbox = step(faceDetector, frame);
+        % Draw boxes around detected faces and display results
+        I_faces = step(shapeInserter, frame, int32(bbox));
+        imshow(I_faces), title('Detected faces');
+
+    for i = 1:size(bbox,1)
+        J = imcrop(frame,bbox(i,:));
+  
+        %figure(3),subplot(2,2,i);imshow(J);
+        %imshow(J); 
+        J = rgb2gray(J);
+        imwrite(imresize(J, [112 92]), strcat('query','.pgm'));
         %queryImage = read(test(person),j);
         queryImage  = imread('query.pgm');
         
@@ -80,14 +94,13 @@ while(1)
         integerIndex = find(booleanIndex);
         subplot(2,2,figureNum);imshow(imresize(queryImage,3));title('Query Face');
         subplot(2,2,figureNum+1);imshow(imresize(read(training(integerIndex),1),3));title('Matched Class');
-        figureNum = figureNum+2;
+        %figureNum = figureNum+2;
         
     end
-    figure;
-    figureNum = 1;
+    %figure;
+    %figureNum = 1;
     pause(5);
-
+    end
 end
-
 
 
